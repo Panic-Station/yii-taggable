@@ -3,8 +3,6 @@
 /protected/*
 !/protected/extensions/
 /protected/extensions/*
-!/protected/extensions/behaviours/
-/protected/extensions/behaviours/*
-!/protected/extensions/behaviours/Su_MpaK
-/protected/extensions/behaviours/Su_MpaK/*
-!/protected/extensions/behaviours/Su_MpaK/Taggable/
+!/protected/extensions/Su_MpaK/
+/protected/extensions/Su_MpaK/*
+!/protected/extensions/Su_MpaK/Taggable/

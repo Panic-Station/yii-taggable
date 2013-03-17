@@ -184,6 +184,22 @@ class TaggableBehaviour extends CActiveRecordBehavior {
     }
    
     
+    public function has() {
+        $tagsList = $this->getTagsList( func_get_args() );
+        
+        $result = true;
+        
+        foreach ( array_keys( $tagsList->toArray() ) as $tagTitle ) {
+            if ( !$this->tagsList->contains( $tagTitle ) ) {
+                $result = false;
+                break;
+            }
+        }
+        
+        return $result;
+    }
+    
+        
     protected function loadTags( $additionalCriteria = null ) {
         
         if ( !$this->tagsAreLoaded ) {

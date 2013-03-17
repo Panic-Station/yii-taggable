@@ -164,7 +164,10 @@ class TaggableBehaviour extends CActiveRecordBehavior {
     }
     
     
-    protected function getTagPk( $full = true, $alias = true ) {
+    protected function getTagPk( 
+        $full = true, 
+        $alias = true 
+    ) {
         
         /* @var $tagModel CActiveRecord */
         $tagModel = $this->getTagModel();
@@ -187,7 +190,11 @@ class TaggableBehaviour extends CActiveRecordBehavior {
     }    
     
     
-    public function getTagTitle( $full = true, $alias = true ) {
+    public function getTagTitle( 
+        $full = true, 
+        $alias = true 
+    ) {
+        
         $result = $this->tagTableTitle;
         
         if ( $full ) {
@@ -228,11 +235,14 @@ class TaggableBehaviour extends CActiveRecordBehavior {
     
     
     public function has() {
+        $this->loadTags();
+        
         $tagsList = $this->getTagsList( func_get_args() );
         
         $result = true;
         
         foreach ( array_keys( $tagsList->toArray() ) as $tagTitle ) {
+            
             if ( !$this->tagsList->contains( $tagTitle ) ) {
                 $result = false;
                 break;
@@ -281,8 +291,7 @@ class TaggableBehaviour extends CActiveRecordBehavior {
     }    
     
     
-    protected function prepareFindTagsCriteria( $additionalCriteria ) {
-        
+    protected function prepareFindTagsCriteria( $additionalCriteria ) {        
         $result = new CDbCriteria(
             Array(
 
@@ -312,7 +321,10 @@ class TaggableBehaviour extends CActiveRecordBehavior {
     }
     
     
-    protected function prepareTagObject( $tag, $tagTitle ) {
+    protected function prepareTagObject( 
+        $tag, 
+        $tagTitle 
+    ) {
         
         /* @var $tagModel CActiveRecord */
         $tagModel = $this->getTagModel();
@@ -326,8 +338,7 @@ class TaggableBehaviour extends CActiveRecordBehavior {
             if ( is_object( $tag ) && $tag instanceof $tagModelClass ) {
                 $result = $tag;
 
-            } else {
-                
+            } else {                
                 $existingTag = $tagModel->model()->find(
                     sprintf( '%s = :title', $this->getTagTitle() ),
                     Array(
@@ -362,8 +373,7 @@ class TaggableBehaviour extends CActiveRecordBehavior {
 
             $tagTitle = $tag->$tagTableTitle;                        
 
-        } elseif ( is_object( $tag ) && !method_exists( $tag, '__toString' ) ) { 
-            
+        } elseif ( is_object( $tag ) && !method_exists( $tag, '__toString' ) ) {             
             throw new Exception( 
                 sprintf( 
                     'It is unable to typecast to String object of class %s',
@@ -407,8 +417,7 @@ class TaggableBehaviour extends CActiveRecordBehavior {
         return $this->owner;        
     }
     
-    
-    
+        
     public function taggedWith() {
         $tagsList = $this->getTagsList( func_get_args() );
        

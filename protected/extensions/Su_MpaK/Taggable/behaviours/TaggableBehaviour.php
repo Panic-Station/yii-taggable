@@ -34,6 +34,7 @@ class TaggableBehaviour extends CActiveRecordBehavior {
 
     
     public function afterDelete( $event ) {
+        $this->clearAttachedTags();            
         
         parent::afterDelete( $event );
     }
@@ -41,9 +42,42 @@ class TaggableBehaviour extends CActiveRecordBehavior {
     
     public function afterSave( $event ) {
         
+        if ( !$this->owner->isNewRecord ) {
+            $this->clearAttachedTags();            
+        }
+        
+        /* @var $tag CActiveRecord */
+        foreach ( $this->tagsList as $tag ) {            
+            
+            if ( $tag->isNewRecord ) {
+                $tag->save();
+            }
+                                    
+            Yii::app()->db->createCommand()->insert(
+                $this->getRelationTable(), 
+                Array(
+                    
+                    $this->getRelationModelFk( false ) => 
+                        $this->owner->primaryKey,
+                    
+                    $this->getRelationTagFk( false ) => $tag->primaryKey
+                )
+            );
+        }
+        
         parent::beforeSave($event);
     }
     
+    
+    protected function clearAttachedTags() {
+        Yii::app()->db->createCommand()->delete(
+            $this->getRelationTable(),
+            $this->getRelationModelFk().' = :modelId',
+            Array(
+                'modelId' => $this->owner->primaryKey
+            )
+        );        
+    }
     
     
     public function get( $additionalCriteria = null ) {
@@ -231,10 +265,23 @@ class TaggableBehaviour extends CActiveRecordBehavior {
                 $result = $tag;
 
             } else {
-                $result = Yii::createComponent( Array(
-                    'class' => $this->tagModel,
-                    $this->tagTableTitle => $tagTitle
-                ) );
+                
+                $existingTag = $tagModel->model()->find(
+                    $this->tagTableTitle.' = :title',
+                    Array(
+                        'title' => $tagTitle
+                    )
+                );
+                
+                if ( $existingTag ) {
+                    $result = $existingTag;
+                    
+                } else {
+                    $result = Yii::createComponent( Array(
+                        'class' => $this->tagModel,
+                        $this->tagTableTitle => $tagTitle
+                    ) );                    
+                }
             }                    
         }                                
         
@@ -274,8 +321,8 @@ class TaggableBehaviour extends CActiveRecordBehavior {
 
         $tagsList = $this->getTagsList( func_get_args() );        
             
-        foreach ( array_keys( $tagsList->toArray() ) as $key ) {
-            $this->tagsList->remove( $key );
+        foreach ( array_keys( $tagsList->toArray() ) as $tagTitle ) {
+            $this->tagsList->remove( $tagTitle );
         }                
     }    
     
@@ -288,6 +335,9 @@ class TaggableBehaviour extends CActiveRecordBehavior {
     public function set() {
         $this->tagsList = $this->getTagsList( func_get_args() );        
     }
+    
+    
+
         
 }
 

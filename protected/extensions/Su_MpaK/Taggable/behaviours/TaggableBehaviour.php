@@ -83,6 +83,17 @@ class TaggableBehaviour extends CActiveRecordBehavior {
     public function get( $additionalCriteria = null ) {
         return $this->loadTags( $additionalCriteria );        
     }
+
+    
+    protected function getModelPk( $full = true ) {
+        $result = $this->owner->tableSchema->primaryKey;
+        
+        if ( $full ) {
+            $result = $this->owner->tableAlias.'.'.$result;
+        }
+        
+        return $result;
+    }
     
     
     protected function getRelationModelFk( $full = true ) {
@@ -150,7 +161,7 @@ class TaggableBehaviour extends CActiveRecordBehavior {
     }
     
     
-    protected function getTagPk( $full = true ) {
+    protected function getTagPk( $full = true, $alias = true ) {
         
         /* @var $tagModel CActiveRecord */
         $tagModel = $this->getTagModel();
@@ -158,14 +169,43 @@ class TaggableBehaviour extends CActiveRecordBehavior {
         $result = $tagModel->tableSchema->primaryKey;
         
         if ( $full ) {
-            $result = $tagModel->tableAlias.'.'.$result;
+            
+            if ( $alias ) {
+                $prefix = $tagModel->tableAlias;
+                
+            } else {
+                $prefix = $tagModel->tableName();
+            }
+            
+            $result = $prefix.'.'.$result;
         }
         
         return $result;
     }    
     
     
-     protected function getTagsList( $methodArguments ) {
+    public function getTagTitle( $full = true, $alias = true ) {
+        $result = $this->tagTableTitle;
+        
+        if ( $full ) {
+            /* @var $tagModel CActiveRecord */
+            $tagModel = $this->getTagModel();
+            
+            if ( $alias ) {
+                $prefix = $tagModel->tableAlias;
+                
+            } else {
+                $prefix = $tagModel->tableName();
+            }
+            
+            $result = $prefix.'.'.$result;
+        }
+        
+        return $result;
+    }
+    
+    
+    protected function getTagsList( $methodArguments ) {
         $result = new CMap();
         
         foreach ( $methodArguments as $tagList ) {
@@ -181,8 +221,8 @@ class TaggableBehaviour extends CActiveRecordBehavior {
         }
         
         return $result;
-    }
-   
+    }         
+    
     
     public function has() {
         $tagsList = $this->getTagsList( func_get_args() );
@@ -211,7 +251,7 @@ class TaggableBehaviour extends CActiveRecordBehavior {
 
             $tagsList = $tagModel->model()->findAll( $criteria );
             
-            $tagTableTitle = $this->tagTableTitle;
+            $tagTableTitle = $this->getTagTitle( false );
             
             foreach ( $tagsList as $tag ) {
                 $this->tagsList[$tag->$tagTableTitle] = $tag;                
@@ -240,17 +280,13 @@ class TaggableBehaviour extends CActiveRecordBehavior {
     
     protected function prepareFindTagsCriteria( $additionalCriteria ) {
         
-        $relationTable = $this->getRelationTable();
-        $relationTagFk = $this->getRelationTagFk();
-        $relationModelFk = $this->getRelationModelFk();
-
         $result = new CDbCriteria(
             Array(
 
-                'join' => 'INNER JOIN '.$relationTable
-                    .' ON '.$relationTagFk.' = '.$this->getTagPk(),
+                'join' => 'INNER JOIN '.$this->getRelationTable()
+                    .' ON '.$this->getRelationTagFk().' = '.$this->getTagPk(),
 
-                'condition' => $relationModelFk.' = :modelId',
+                'condition' => $this->getRelationModelFk().' = :modelId',
 
                 'params' => Array(
                     'modelId' => $this->owner->primaryKey
@@ -283,7 +319,7 @@ class TaggableBehaviour extends CActiveRecordBehavior {
             } else {
                 
                 $existingTag = $tagModel->model()->find(
-                    $this->tagTableTitle.' = :title',
+                    $this->getTagTitle().' = :title',
                     Array(
                         'title' => $tagTitle
                     )
@@ -295,7 +331,7 @@ class TaggableBehaviour extends CActiveRecordBehavior {
                 } else {
                     $result = Yii::createComponent( Array(
                         'class' => $this->tagModel,
-                        $this->tagTableTitle => $tagTitle
+                        $this->getTagTitle( false ) => $tagTitle
                     ) );                    
                 }
             }                    
@@ -312,7 +348,7 @@ class TaggableBehaviour extends CActiveRecordBehavior {
         $tagModelClass = get_class( $tagModel );
         
         if ( $tag instanceof $tagModelClass ) {
-            $tagTableTitle = $this->tagTableTitle;
+            $tagTableTitle = $this->getTagTitle( false );
 
             $tagTitle = $tag->$tagTableTitle;                        
 
@@ -353,7 +389,29 @@ class TaggableBehaviour extends CActiveRecordBehavior {
     }
     
     
-
+    
+    public function taggedWith() {
+        $tagsList = $this->getTagsList( func_get_args() );
+       
+        /* @var $tagModel CActiveRecord */
+        $tagModel = $this->getTagModel();       
+       
+        $criteria = new CDbCriteria( Array(
+            'join' => 
+                'INNER JOIN '.$this->getRelationTable()
+                    .' ON '.$this->getRelationModelFk().' = '.$this->getModelPk()
+                .' INNER JOIN '.$tagModel->tableName()
+                    .' ON '.$this->getRelationTagFk().' = '.$this->getTagPk( true, false ),
+            'condition' => $this->getTagTitle( true, false ).' IN ( :tagTitleList )',
+            'params' => Array(
+                'tagTitleList' => implode( ',', array_keys( $tagsList->toArray() ) )
+            )
+        ) );
+        
+        $this->owner->getDbCriteria()->mergeWith( $criteria );
+        
+        return $this->owner;
+    }
         
 }
 

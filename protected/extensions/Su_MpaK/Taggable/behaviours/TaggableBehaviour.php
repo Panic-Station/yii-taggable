@@ -450,6 +450,15 @@ class TaggableBehaviour extends CActiveRecordBehavior {
         return $this->owner;
     }
         
+    
+    public function __toString() {
+        $this->loadTags();
+        
+        return implode( 
+            $this->tagsSeparator, 
+            array_keys( $this->tagsList->toArray() ) 
+        );
+    }
 }
 
 ?>

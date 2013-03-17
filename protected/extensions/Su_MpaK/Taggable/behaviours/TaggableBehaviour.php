@@ -18,23 +18,18 @@ class TaggableBehaviour extends CActiveRecordBehavior {
     
     protected $tagsList;
     
-    protected $originalTagsList;
-    
     protected $blankTagModel = null;
     
     protected $tagsAreLoaded = false;
     
     
     public function __construct() {
-        $this->originalTagsList = new CMap();
         $this->tagsList = new CMap();
     }
     
     
     public function add() {
-        $tagsList = $this->getTagsList( func_get_args() );
-        
-        $this->tagsList->mergeWith( $tagsList );        
+        $this->loadTags()->mergeWith( $this->getTagsList( func_get_args() ) );
     }
 
     
@@ -45,13 +40,14 @@ class TaggableBehaviour extends CActiveRecordBehavior {
     
     
     public function afterSave( $event ) {
-                
+        
         parent::beforeSave($event);
     }
     
     
-    public function get() {
-        return $this->loadTags();        
+    
+    public function get( $additionalCriteria = null ) {
+        return $this->loadTags( $additionalCriteria );        
     }
     
     
@@ -168,10 +164,8 @@ class TaggableBehaviour extends CActiveRecordBehavior {
             $tagTableTitle = $this->tagTableTitle;
             
             foreach ( $tagsList as $tag ) {
-                $this->originalTagsList[$tag->$tagTableTitle] = $tag;                
+                $this->tagsList[$tag->$tagTableTitle] = $tag;                
             }  
-            
-            $this->tagsList->mergeWith( $this->originalTagsList );
             
             $this->tagsAreLoaded = true;
         }
@@ -276,11 +270,13 @@ class TaggableBehaviour extends CActiveRecordBehavior {
    
     
     public function remove() {
+        $this->loadTags();
+
         $tagsList = $this->getTagsList( func_get_args() );        
-                    
+            
         foreach ( array_keys( $tagsList->toArray() ) as $key ) {
             $this->tagsList->remove( $key );
-        }        
+        }                
     }    
     
 

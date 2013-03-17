@@ -20,6 +20,8 @@ class TaggableBehaviour extends CActiveRecordBehavior {
     
     protected $blankTagModel = null;
     
+    protected $tagsAreLoaded = false;
+    
     
     public function add() {
         $tagsList = $this->getTagsList( func_get_args() );
@@ -41,9 +43,7 @@ class TaggableBehaviour extends CActiveRecordBehavior {
     
     
     public function get() {
-        $this->loadTags();
-        
-        // TODO return the list of tags
+        return $this->loadTags();        
     }
     
     
@@ -120,7 +120,7 @@ class TaggableBehaviour extends CActiveRecordBehavior {
         $result = $tagModel->tableSchema->primaryKey;
         
         if ( $full ) {
-            $result .= $tagModel->tableAlias.'.';
+            $result = $tagModel->tableAlias.'.'.$result;
         }
         
         return $result;
@@ -167,30 +167,46 @@ class TaggableBehaviour extends CActiveRecordBehavior {
     
     protected function loadTags() {
         
-        /* @var $tagModel CActiveRecord */
-        $tagModel = $this->getTagModel();
-        
-        $relationTable = $this->getRelationTable();
-        $relationTagFk = $this->getRelationTagFk();
-        $relationModelFk = $this->getRelationModelFk();
-        
-        $criteria = new CDbCriteria(
-            Array(
-                
-                'join' => 'INNER JOIN '.$relationTable
-                    .' ON '.$relationTagFk.' = '.$this->getTagPk(),
-                
-                'condition' => $relationModelFk.' = :modelId',
-                
-                'params' => Array(
-                    'modelId' => $this->owner->primaryKey
+        if ( !$this->tagsAreLoaded ) {
+            
+            /* @var $tagModel CActiveRecord */
+            $tagModel = $this->getTagModel();
+
+            $relationTable = $this->getRelationTable();
+            $relationTagFk = $this->getRelationTagFk();
+            $relationModelFk = $this->getRelationModelFk();
+
+            $criteria = new CDbCriteria(
+                Array(
+
+                    'join' => 'INNER JOIN '.$relationTable
+                        .' ON '.$relationTagFk.' = '.$this->getTagPk(),
+
+                    'condition' => $relationModelFk.' = :modelId',
+
+                    'params' => Array(
+                        'modelId' => $this->owner->primaryKey
+                    )
                 )
-            )
-        );
+            );
+
+            $tagsList = $tagModel->model()->findAll( $criteria );
+
+            $tagTableTitle = $this->tagTableTitle;
+            
+            foreach ( $tagsList as $tag ) {
+                $this->originalTagsList[$tag->$tagTableTitle] = $tag;                
+            }  
+            
+            $this->tagsList = array_merge( 
+                $this->tagsList, 
+                $this->originalTagsList 
+            );
+            
+            $this->tagsAreLoaded = true;
+        }
         
-        $tagsList = $tagModel->model()->findAll( $criteria );
-        
-        $this->originalTagsList = $tagsList;
+        return $this->tagsList;
     }
     
     

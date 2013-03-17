@@ -14,19 +14,27 @@ class TaggableBehaviour extends CActiveRecordBehavior {
     
     public $tagRelationTableModelFk = null;
     
-    protected $tagsList = Array();
+    public $tagsSeparator = ',';
     
-    protected $originalTagsList = Array();
+    protected $tagsList;
+    
+    protected $originalTagsList;
     
     protected $blankTagModel = null;
     
     protected $tagsAreLoaded = false;
     
     
+    public function __construct() {
+        $this->originalTagsList = new CMap();
+        $this->tagsList = new CMap();
+    }
+    
+    
     public function add() {
         $tagsList = $this->getTagsList( func_get_args() );
         
-        $this->tagsList = array_unique( array_merge( $this->tagsList, $tagsList ) );        
+        $this->tagsList->mergeWith( $tagsList );        
     }
 
     
@@ -127,81 +135,43 @@ class TaggableBehaviour extends CActiveRecordBehavior {
     }    
     
     
-    protected function getTagsList( $methodArguments ) {
-        $result = Array();
+     protected function getTagsList( $methodArguments ) {
+        $result = new CMap();
         
         foreach ( $methodArguments as $tagList ) {
                         
-            if ( !is_array( $tagList ) ) {
-                
-                if ( is_string( $tagList ) ) {
-                    $tagList = explode( ',', $tagList );                    
-                    
-                } else {
-                    $tagList = Array( $tagList );                    
-                }
-            }
+            $this->normalizeTagList( $tagList );
             
             foreach ( $tagList as $tag ) {
                 
-                if ( 
-                    is_object( $tag ) 
-                    && !method_exists( $tag, '__toString' ) 
-                ) {
-                    
-                    throw new Exception( 
-                        'It is unable to typecast to String object of class '
-                        .get_class( $tag ) 
-                    );                    
-                }
-
-                $tag = (string) $tag;
-                                
-                $result[$tag] = trim( strip_tags( $tag ) );
+                $tagTitle = $this->prepareTagTitle( $tag );
+                
+                $result[$tagTitle] = $this->prepareTagObject( $tag, $tagTitle );                
             }            
         }
         
         return $result;
     }
+   
     
-    
-    protected function loadTags() {
+    protected function loadTags( $additionalCriteria = null ) {
         
         if ( !$this->tagsAreLoaded ) {
             
             /* @var $tagModel CActiveRecord */
             $tagModel = $this->getTagModel();
 
-            $relationTable = $this->getRelationTable();
-            $relationTagFk = $this->getRelationTagFk();
-            $relationModelFk = $this->getRelationModelFk();
-
-            $criteria = new CDbCriteria(
-                Array(
-
-                    'join' => 'INNER JOIN '.$relationTable
-                        .' ON '.$relationTagFk.' = '.$this->getTagPk(),
-
-                    'condition' => $relationModelFk.' = :modelId',
-
-                    'params' => Array(
-                        'modelId' => $this->owner->primaryKey
-                    )
-                )
-            );
+            $criteria = $this->prepareFindTagsCriteria( $additionalCriteria );
 
             $tagsList = $tagModel->model()->findAll( $criteria );
-
+            
             $tagTableTitle = $this->tagTableTitle;
             
             foreach ( $tagsList as $tag ) {
                 $this->originalTagsList[$tag->$tagTableTitle] = $tag;                
             }  
             
-            $this->tagsList = array_merge( 
-                $this->tagsList, 
-                $this->originalTagsList 
-            );
+            $this->tagsList->mergeWith( $this->originalTagsList );
             
             $this->tagsAreLoaded = true;
         }
@@ -210,22 +180,117 @@ class TaggableBehaviour extends CActiveRecordBehavior {
     }
     
     
+    private function normalizeTagList( &$tagList ) {
+        
+        if ( !is_array( $tagList ) ) {
+
+            if ( is_string( $tagList ) ) {
+                $tagList = explode( $this->tagsSeparator, $tagList );                    
+
+            } else {
+                $tagList = Array( $tagList );                    
+            }
+        }        
+    }    
+    
+    
+    protected function prepareFindTagsCriteria( $additionalCriteria ) {
+        
+        $relationTable = $this->getRelationTable();
+        $relationTagFk = $this->getRelationTagFk();
+        $relationModelFk = $this->getRelationModelFk();
+
+        $result = new CDbCriteria(
+            Array(
+
+                'join' => 'INNER JOIN '.$relationTable
+                    .' ON '.$relationTagFk.' = '.$this->getTagPk(),
+
+                'condition' => $relationModelFk.' = :modelId',
+
+                'params' => Array(
+                    'modelId' => $this->owner->primaryKey
+                )
+            )
+        );
+
+        if ( !empty( $additionalCriteria )) {
+            $result->mergeWith( $additionalCriteria );
+        }
+        
+        return $result;       
+    }
+    
+    
+    protected function prepareTagObject( $tag, $tagTitle ) {
+        
+        /* @var $tagModel CActiveRecord */
+        $tagModel = $this->getTagModel();
+        $tagModelClass = get_class( $tagModel );
+
+        if ( isset( $this->tagsList[$tagTitle] ) ) {
+            $result = $this->tagsList[$tagTitle];
+
+        } else {
+
+            if ( is_object( $tag ) && $tag instanceof $tagModelClass ) {
+                $result = $tag;
+
+            } else {
+                $result = Yii::createComponent( Array(
+                    'class' => $this->tagModel,
+                    $this->tagTableTitle => $tagTitle
+                ) );
+            }                    
+        }                                
+        
+        return $result;
+    }
+    
+    
+    protected function prepareTagTitle( $tag ) {    
+        
+        /* @var $tagModel CActiveRecord */        
+        $tagModel = $this->getTagModel();
+        $tagModelClass = get_class( $tagModel );
+        
+        if ( $tag instanceof $tagModelClass ) {
+            $tagTableTitle = $this->tagTableTitle;
+
+            $tagTitle = $tag->$tagTableTitle;                        
+
+        } elseif ( is_object( $tag ) && !method_exists( $tag, '__toString' ) ) {                        
+            throw new Exception( 
+                'It is unable to typecast to String object of class '
+                .get_class( $tag ) 
+            );                                                                    
+            
+        } else {
+            $tagTitle = (string) $tag;                                                                                                
+        }
+
+        $result = trim( strip_tags( $tagTitle ) );       
+        
+        return $result;
+    }
+   
+    
     public function remove() {
         $tagsList = $this->getTagsList( func_get_args() );        
-        
-        $this->tagsList = array_diff( $this->tagsList, $tagsList );
+                    
+        foreach ( array_keys( $tagsList->toArray() ) as $key ) {
+            $this->tagsList->remove( $key );
+        }        
     }    
     
 
     public function reset() {
-        $this->tagsList = Array();
+        $this->tagsList->clear();
     }
     
     
     public function set() {
-        $tagsList = $this->getTagsList( func_get_args() );        
-
-        $this->tagsList = $tagsList;
+        $this->tagsList = $this->getTagsList( func_get_args() );        
     }
         
 }

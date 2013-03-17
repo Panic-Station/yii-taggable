@@ -30,6 +30,8 @@ class TaggableBehaviour extends CActiveRecordBehavior {
     
     public function add() {
         $this->loadTags()->mergeWith( $this->getTagsList( func_get_args() ) );
+        
+        return $this->owner;
     }
 
     
@@ -41,6 +43,7 @@ class TaggableBehaviour extends CActiveRecordBehavior {
     
     
     public function afterSave( $event ) {
+        $this->loadTags();
         
         if ( !$this->owner->isNewRecord ) {
             $this->clearAttachedTags();            
@@ -72,7 +75,7 @@ class TaggableBehaviour extends CActiveRecordBehavior {
     protected function clearAttachedTags() {
         Yii::app()->db->createCommand()->delete(
             $this->getRelationTable(),
-            $this->getRelationModelFk().' = :modelId',
+            sprintf( '%s = :modelId', $this->getRelationModelFk() ),
             Array(
                 'modelId' => $this->owner->primaryKey
             )
@@ -283,10 +286,17 @@ class TaggableBehaviour extends CActiveRecordBehavior {
         $result = new CDbCriteria(
             Array(
 
-                'join' => 'INNER JOIN '.$this->getRelationTable()
-                    .' ON '.$this->getRelationTagFk().' = '.$this->getTagPk(),
+                'join' => sprintf( 
+                    'INNER JOIN %s ON %s = %s ', 
+                    $this->getRelationTable(), 
+                    $this->getRelationTagFk(), 
+                    $this->getTagPk()
+                ),
 
-                'condition' => $this->getRelationModelFk().' = :modelId',
+                'condition' => sprintf( 
+                    '%s = :modelId', 
+                    $this->getRelationModelFk() 
+                ),
 
                 'params' => Array(
                     'modelId' => $this->owner->primaryKey
@@ -319,7 +329,7 @@ class TaggableBehaviour extends CActiveRecordBehavior {
             } else {
                 
                 $existingTag = $tagModel->model()->find(
-                    $this->getTagTitle().' = :title',
+                    sprintf( '%s = :title', $this->getTagTitle() ),
                     Array(
                         'title' => $tagTitle
                     )
@@ -352,10 +362,13 @@ class TaggableBehaviour extends CActiveRecordBehavior {
 
             $tagTitle = $tag->$tagTableTitle;                        
 
-        } elseif ( is_object( $tag ) && !method_exists( $tag, '__toString' ) ) {                        
+        } elseif ( is_object( $tag ) && !method_exists( $tag, '__toString' ) ) { 
+            
             throw new Exception( 
-                'It is unable to typecast to String object of class '
-                .get_class( $tag ) 
+                sprintf( 
+                    'It is unable to typecast to String object of class %s',
+                    get_class( $tag )  
+                )
             );                                                                    
             
         } else {
@@ -375,17 +388,23 @@ class TaggableBehaviour extends CActiveRecordBehavior {
             
         foreach ( array_keys( $tagsList->toArray() ) as $tagTitle ) {
             $this->tagsList->remove( $tagTitle );
-        }                
+        }     
+        
+        return $this->owner;        
     }    
     
 
     public function reset() {
         $this->tagsList->clear();
+        
+        return $this->owner;        
     }
     
     
     public function set() {
         $this->tagsList = $this->getTagsList( func_get_args() );        
+        
+        return $this->owner;        
     }
     
     
@@ -397,16 +416,25 @@ class TaggableBehaviour extends CActiveRecordBehavior {
         $tagModel = $this->getTagModel();       
        
         $criteria = new CDbCriteria( Array(
-            'join' => 
-                'INNER JOIN '.$this->getRelationTable()
-                    .' ON '.$this->getRelationModelFk().' = '.$this->getModelPk()
-                .' INNER JOIN '.$tagModel->tableName()
-                    .' ON '.$this->getRelationTagFk().' = '.$this->getTagPk( true, false ),
-            'condition' => $this->getTagTitle( true, false ).' IN ( :tagTitleList )',
-            'params' => Array(
-                'tagTitleList' => implode( ',', array_keys( $tagsList->toArray() ) )
-            )
+            
+            'join' => sprintf(
+                'INNER JOIN %s ON %s = %s INNER JOIN %s ON %s = %s',
+                $this->getRelationTable(),
+                $this->getRelationModelFk(),
+                $this->getModelPk(),
+                $tagModel->tableName(),
+                $this->getRelationTagFk(),
+                $this->getTagPk( true, false )
+            ),
+            
+            'distinct' => true,
+            
         ) );
+                
+        $criteria->addInCondition( 
+            $this->getTagTitle( true, false ), 
+            array_keys( $tagsList->toArray() )
+        );
         
         $this->owner->getDbCriteria()->mergeWith( $criteria );
         

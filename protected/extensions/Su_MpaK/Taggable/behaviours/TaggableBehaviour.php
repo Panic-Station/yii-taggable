@@ -13,7 +13,7 @@
  * 
  * @package ext.Su_MpaK.Taggable.behaviours
  * 
- * @version 1.11.07.01
+ * @version 1.11.01.01
  */
 class TaggableBehaviour extends CActiveRecordBehavior {
    

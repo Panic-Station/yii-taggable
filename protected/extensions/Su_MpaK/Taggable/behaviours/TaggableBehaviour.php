@@ -3,7 +3,7 @@
 
 
 /**
- * Behaviour for ActiveRecord that allows to attach tags to a model.
+ * Behaviour for CActiveRecord that allows to attach tags to a model.
  * 
  * @author Denis Poltoratsky <356187@gmail.com>
  * 
@@ -353,7 +353,7 @@ class TaggableBehaviour extends CActiveRecordBehavior {
      * @param bool $alias If true - field will be prepended with table alias, other way - with table name.
      * @return string Tag table title field name.
      */
-    public function getTagTitle( 
+    protected function getTagTitle( 
         $full = true, 
         $alias = true 
     ) {
@@ -645,6 +645,8 @@ class TaggableBehaviour extends CActiveRecordBehavior {
      * @see CActiveRecord
      */
     public function reset() {
+        $this->tagsAreLoaded = true;
+        
         $this->tagsList->clear();
         
         return $this->owner;        
@@ -660,6 +662,8 @@ class TaggableBehaviour extends CActiveRecordBehavior {
      * @see CActiveRecord
      */
     public function set() {
+        $this->tagsAreLoaded = true;
+        
         $this->tagsList = $this->getTagsList( func_get_args() );        
         
         return $this->owner;        

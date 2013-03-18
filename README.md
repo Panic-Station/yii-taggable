@@ -11,13 +11,13 @@ Behaviour for CActiveRecord that allows to attach tags to a model.
 
 ## Table of contents
 [Public properties](#public-properties)
-- [tagModel](#tagModel)
-- [tagTableTitle](#tagTableTitle)
-- [tagTableTitle](#tagTableTitle)
-- [tagRelationTable](#tagRelationTable)
-- [tagRelationTableTagFk](#tagRelationTableTagFk)
-- [tagRelationTableModelFk](#tagRelationTableModelFk)
-- [tagsSeparator](#tagsSeparator)
+- [tagModel](#tagmodel)
+- [tagTableTitle](#tagtabletitle)
+- [tagTableTitle](#tagtabletitle)
+- [tagRelationTable](#tagrelationtable)
+- [tagRelationTableTagFk](#tagrelationtabletagfk)
+- [tagRelationTableModelFk](#tagrelationtablemodelfk)
+- [tagsSeparator](#tagsseparator)
 
 [Configuration examples](#configuration-examples)
 - [Minimal configuration](#minimal-configuration)
@@ -31,7 +31,7 @@ Behaviour for CActiveRecord that allows to attach tags to a model.
 - [remove](#remove)
 - [reset](#reset)
 - [set](#set)
-- [taggedWith](#taggedWith)
+- [taggedWith](#taggedwith)
 - [__toString](#__toString)
 
 ## Public properties

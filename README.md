@@ -13,7 +13,6 @@ Behaviour for CActiveRecord that allows to attach tags to a model.
 [Public properties](#public-properties)
 - [tagModel](#tagmodel)
 - [tagTableTitle](#tagtabletitle)
-- [tagTableTitle](#tagtabletitle)
 - [tagRelationTable](#tagrelationtable)
 - [tagRelationTableTagFk](#tagrelationtabletagfk)
 - [tagRelationTableModelFk](#tagrelationtablemodelfk)

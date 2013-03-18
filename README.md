@@ -9,6 +9,14 @@ Behaviour for CActiveRecord that allows to attach tags to a model.
 
 **Inheritance:** class Taggable >> [CActiveRecordBehavior](http://www.yiiframework.com/doc/api/1.1/CActiveRecordBehavior) >> [CModelBehavior](http://www.yiiframework.com/doc/api/1.1/CModelBehavior) >> [CBehavior](http://www.yiiframework.com/doc/api/1.1/CBehavior) >> [CComponent](http://www.yiiframework.com/doc/api/1.1/CComponent)
 
+**Version:** [1.11.01.01](https://github.com/dpoltoratsky/Taggable/tree/v1.11.01.01-release)
+
+There are two version tags:
+
+- [v1.11.01.01-release](https://github.com/dpoltoratsky/Taggable/tree/v1.11.01.01-release) - Pure extension code that is ready to be used in project.
+- [v1.11.01.01-demo](https://github.com/dpoltoratsky/Taggable/tree/v1.11.01.01-demo) - Additionaly contains demo DB schema, demo models, readme file and license.
+
+
 ## Table of contents
 [Public properties](#public-properties)
 - [tagModel](#tagmodel)

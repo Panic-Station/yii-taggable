@@ -31,7 +31,7 @@ Behaviour for CActiveRecord that allows to attach tags to a model.
 - [reset](#reset)
 - [set](#set)
 - [taggedWith](#taggedwith)
-- [__toString](#__toString)
+- [__toString](#__tostring)
 
 ## Public properties
 

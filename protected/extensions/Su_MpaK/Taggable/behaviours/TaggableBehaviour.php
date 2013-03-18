@@ -114,8 +114,8 @@ class TaggableBehaviour extends CActiveRecordBehavior {
      * Attaches tags to model.
      * 
      * Can be called with any number of arguments of any type. Only constraint 
-     * is that Object arguments showld have __toString defined (only exception 
-     * are instances of tag model).
+     * is that Object arguments should have __toString defined (Not applicable 
+     * to instances of tag model).
      * 
      * @return CActiveRecord Model that behaviour is attached to.
      * 
@@ -196,11 +196,12 @@ class TaggableBehaviour extends CActiveRecordBehavior {
     /**
      * Returns all attached to model tags.
      * 
-     * @param CDbCriteria $additionalCriteria Additional DB criteria to filter attached tags.
+     * @param CDbCriteria $additionalCriteria Additional DB criteria to filter attached tags. Will be passed to CDbCriteria::mergeWith()
      * @return CMap All attached to the model tags.
      * 
      * @see CMap
      * @see CDbCriteria
+     * @see CDbCriteria::mergeWith()
      */
     public function get( $additionalCriteria = null ) {
         return $this->loadTags( $additionalCriteria );        
@@ -411,8 +412,8 @@ class TaggableBehaviour extends CActiveRecordBehavior {
      * Checks whether or not specified tags are attached to the model.
      * 
      * Can be called with any number of arguments of any type. Only constraint 
-     * is that Object arguments showld have __toString defined (only exception 
-     * are instances of tag model).
+     * is that Object arguments should have __toString defined (Not applicable 
+     * to instances of tag model).
      * 
      * @return boolean True if ALL specified tags are attached to the model.
      */
@@ -614,11 +615,11 @@ class TaggableBehaviour extends CActiveRecordBehavior {
    
     
     /**
-     * Detashes specified tags from the model.
+     * Detaches specified tags from the model.
      * 
      * Can be called with any number of arguments of any type. Only constraint 
-     * is that Object arguments showld have __toString defined (only exception 
-     * are instances of tag model).
+     * is that Object arguments should have __toString defined (Not applicable 
+     * to instances of tag model).
      * 
      * @return CActiveRecord Model that behaviour is attached to.
      * 
@@ -654,8 +655,14 @@ class TaggableBehaviour extends CActiveRecordBehavior {
     
     
     /**
-     * Attaches to the model specified set of tags that are replacing all 
+     * Attaches to the model specified set of tags that will replace all 
      * previous ones.
+     * 
+     * Can be called with any number of arguments of any type. Only constraint 
+     * is that Object arguments should have __toString defined (Not applicable 
+     * to instances of tag model).
+     * 
+     * Model will be selected if it has AT LEAST ONE of the specified tags attached.
      * 
      * @return CActiveRecord Model that behaviour is attached to.
      * 
@@ -673,6 +680,10 @@ class TaggableBehaviour extends CActiveRecordBehavior {
     /**
      * Modifies the model DB criteria in order to find models with any of 
      * specidied tags attached.
+     * 
+     * Can be called with any number of arguments of any type. Only constraint 
+     * is that Object arguments should have __toString defined (Not applicable 
+     * to instances of tag model).
      * 
      * @return CActiveRecord Model that behaviour is attached to.
      * 

@@ -175,7 +175,7 @@ class TaggableBehaviour extends CActiveRecordBehavior {
             );
         }
         
-        parent::beforeSave($event);
+        parent::afterSave($event);
     }
     
     
